@@ -17,11 +17,11 @@ impl Matrix {
     }
 }
 
-impl std::ops::Index<(usize, usize)> for Matrix {
+impl std::ops::Index<usize> for Matrix {
     type Output = i32;
     #[inline]
-    fn index(&self, (i, j): (usize, usize)) -> &Self::Output {
-        &self.data[i * self.dim + j]
+    fn index(&self, i: usize) -> &Self::Output {
+        &self.data[i]
     }
 }
 
@@ -54,11 +54,11 @@ impl Matrix {
     #[cfg(not(feature = "single-threaded"))]
     pub fn average_pool(self, width: usize, stride: usize) -> Matrix {
         use std::thread;
-        let dim = (self.dim-width) / stride + 1;
+        let dim = (self.dim - width) / stride + 1;
         let mut data = vec![0; dim * dim];
         let view = std::sync::Arc::new(self);
 
-        thread::scope(|s|{
+        thread::scope(|s| {
             data.chunks_mut(dim)
                 .enumerate()
                 .map(|(index, data)| {
@@ -69,13 +69,14 @@ impl Matrix {
                             let mut sum = 0;
                             for k in 0..width {
                                 for l in 0..width {
-                                    sum += view[(i + k, j*stride + l)];
+                                    sum += view[(i + k) * view.dim + j * stride + l];
                                 }
                             }
                             data[j] = sum / (width * width) as i32;
                         }
                     })
-                }).collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
                 .into_iter()
                 .for_each(|handle| handle.join().unwrap());
         });
