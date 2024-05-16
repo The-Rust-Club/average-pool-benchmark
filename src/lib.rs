@@ -61,7 +61,7 @@ impl Matrix {
         thread::scope(|s| {
             data.chunks_mut(dim)
                 .enumerate()
-                .map(|(index, data)| {
+                .for_each(|(index, data)| {
                     let view = view.clone();
                     s.spawn(move || {
                         let i = index * stride;
@@ -74,11 +74,8 @@ impl Matrix {
                             }
                             data[j] = sum / (width * width) as i32;
                         }
-                    })
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-                .for_each(|handle| handle.join().unwrap());
+                    });
+                });
         });
 
         Self { dim, data }
